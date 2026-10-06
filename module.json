@@ -1,0 +1,99 @@
+{
+  "id": "com.flickertalk.countdown",
+  "name": "Countdown",
+  "version": "1.0.0",
+  "minCoreVersion": "1.1.0",
+  "components": [
+    "ft-countdown"
+  ],
+  "opens": [
+    "text/calendar"
+  ],
+  "permissions": {
+    "send": "propose",
+    "remind": true
+  },
+  "summary": "The days that matter and how many are left: birthdays, trips, anniversaries, with a reminder for you alone.",
+  "locales": {
+    "es": {
+      "name": "Cuenta atrás",
+      "summary": "Los días que importan y cuántos faltan: cumpleaños, viajes, aniversarios, con un aviso solo para ti."
+    },
+    "pt": {
+      "name": "Contagem",
+      "summary": "Os dias que importam e quantos faltam: aniversários, viagens, datas especiais, com um lembrete só para si."
+    },
+    "fr": {
+      "name": "Compte à rebours",
+      "summary": "Les jours qui comptent et combien il en reste : anniversaires, voyages, avec un rappel rien que pour vous."
+    },
+    "de": {
+      "name": "Countdown",
+      "summary": "Die Tage, die zählen, und wie viele noch fehlen: Geburtstage, Reisen, Jahrestage, mit einer Erinnerung nur für dich."
+    },
+    "it": {
+      "name": "Conto alla rovescia",
+      "summary": "I giorni che contano e quanti ne mancano: compleanni, viaggi, anniversari, con un promemoria solo per te."
+    },
+    "ro": {
+      "name": "Numărătoare",
+      "summary": "Zilele care contează și câte mai sunt: zile de naștere, călătorii, aniversări, cu un memento doar pentru tine."
+    },
+    "ru": {
+      "name": "Обратный отсчёт",
+      "summary": "Важные даты и сколько дней до них: дни рождения, поездки, годовщины, с напоминанием только для вас."
+    },
+    "uk": {
+      "name": "Зворотний відлік",
+      "summary": "Важливі дати й скільки днів до них: дні народження, подорожі, річниці, з нагадуванням лише для вас."
+    },
+    "pl": {
+      "name": "Odliczanie",
+      "summary": "Ważne dni i ile do nich zostało: urodziny, podróże, rocznice, z przypomnieniem tylko dla Ciebie."
+    },
+    "tr": {
+      "name": "Geri sayım",
+      "summary": "Önemli günler ve kaç gün kaldığı: doğum günleri, yolculuklar, yıl dönümleri, yalnızca size özel hatırlatmayla."
+    },
+    "ar": {
+      "name": "العد التنازلي",
+      "summary": "الأيام المهمة وكم بقي عليها: أعياد ميلاد، رحلات، ذكريات سنوية، مع تذكير لك وحدك."
+    },
+    "hi": {
+      "name": "उलटी गिनती",
+      "summary": "ज़रूरी दिन और कितने बाकी हैं: जन्मदिन, यात्राएँ, सालगिरह, सिर्फ़ आपके लिए रिमाइंडर के साथ।"
+    },
+    "bn": {
+      "name": "কাউন্টডাউন",
+      "summary": "গুরুত্বপূর্ণ দিন আর কত দিন বাকি: জন্মদিন, ভ্রমণ, বার্ষিকী, শুধু আপনার জন্য রিমাইন্ডারসহ।"
+    },
+    "id": {
+      "name": "Hitung mundur",
+      "summary": "Hari-hari penting dan berapa hari lagi: ulang tahun, perjalanan, hari jadi, dengan pengingat hanya untuk Anda."
+    },
+    "vi": {
+      "name": "Đếm ngược",
+      "summary": "Những ngày quan trọng và còn bao nhiêu ngày: sinh nhật, chuyến đi, kỷ niệm, với lời nhắc chỉ dành cho bạn."
+    },
+    "th": {
+      "name": "นับถอยหลัง",
+      "summary": "วันสำคัญและเหลืออีกกี่วัน: วันเกิด ทริป วันครบรอบ พร้อมการเตือนสำหรับคุณคนเดียว"
+    },
+    "ja": {
+      "name": "カウントダウン",
+      "summary": "大切な日まであと何日か。誕生日、旅行、記念日を、自分だけのリマインダー付きで。"
+    },
+    "ko": {
+      "name": "카운트다운",
+      "summary": "중요한 날과 남은 날수: 생일, 여행, 기념일을 나만을 위한 알림과 함께."
+    },
+    "zh-CN": {
+      "name": "倒数日",
+      "summary": "重要的日子还有几天：生日、旅行、纪念日，附带只属于你的提醒。"
+    },
+    "zh-TW": {
+      "name": "倒數日",
+      "summary": "重要的日子還有幾天：生日、旅行、紀念日，附帶只屬於你的提醒。"
+    }
+  }
+}
