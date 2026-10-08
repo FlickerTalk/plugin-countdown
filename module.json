@@ -1,7 +1,8 @@
 {
   "id": "com.flickertalk.countdown",
   "name": "Countdown",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "icon": "timer-outline",
   "minCoreVersion": "1.1.0",
   "components": [
     "ft-countdown"
