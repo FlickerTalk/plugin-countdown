@@ -32,6 +32,11 @@ contacto.
 Necesita el núcleo **1.1.0** (`minCoreVersion`). El contrato está en
 [plugin-sdk](https://github.com/FlickerTalk/plugin-sdk).
 
+Desde la 1.0.2 la ventana va en los envoltorios de Ionic que la app presta al marco (barra en
+`ion-header`, cuerpo en `ion-content`, botones de Ionic), así que se ve como el resto de
+FlickerTalk; pide la app 1.6.0 (`minCoreVersion`) y el paquete no lleva Ionic. `@ionic/core` es
+solo `devDependency`, para que los tests pinten lo mismo que el teléfono.
+
 ## Desarrollo
 
 ```sh
