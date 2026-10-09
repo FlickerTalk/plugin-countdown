@@ -227,50 +227,53 @@ function unescapeIcs(value) {
 const escape = (text) =>
   String(text).replace(/[&<>"']/g, (one) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[one]);
 
+// Ionic draws the window (the app lends it to the frame, app 1.6.0): the bar of each screen and its
+// buttons. This is only what is the tool's own: the rows, the fields and the countdown. The colours
+// are the app's, through Ionic's variables, in light and dark.
 const STYLE = `
-:host { display: block; font: 15px system-ui, sans-serif; color: var(--ion-text-color, #111); --paper: var(--ion-background-color, #fff); --line: var(--ion-border-color, #d8d8d8); --soft: var(--ion-color-medium, #666); --accent: var(--ion-color-primary, #0a7); --danger: var(--ion-color-danger, #e0562b); --on-accent: var(--ion-color-primary-contrast, #fff); }
-* { box-sizing: border-box; }
-.bar { display: flex; gap: 6px; align-items: center; padding: 4px 0 10px; }
-.grow { flex: 1; }
-button {
-  appearance: none; border: 1px solid currentColor; background: transparent; color: inherit;
-  border-radius: 10px; min-width: 44px; height: 40px; font: inherit; padding: 0 10px; cursor: pointer; opacity: .8;
-}
-button.on { opacity: 1; box-shadow: inset 0 0 0 2px currentColor; }
-button.text { min-width: 0; display: inline-flex; align-items: center; gap: 6px; }
-button.danger { color: var(--danger); }
-.i { display: block; width: 22px; height: 22px; margin: auto; background: currentColor; -webkit-mask: var(--i) center/contain no-repeat; mask: var(--i) center/contain no-repeat; }
-.i.small { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; margin: 0; }
-input, select { font: inherit; color: inherit; background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; min-height: 44px; }
-input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; margin: 0; }
-ul { list-style: none; margin: 0; padding: 0; }
-li { border-bottom: 1px solid var(--line); }
-li button { display: flex; width: 100%; align-items: center; gap: 10px; text-align: start; border: 0; border-radius: 0; height: auto; padding: 10px 4px; opacity: 1; }
-li .what { flex: 1; min-width: 0; }
-.title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.meta { color: var(--soft); font-size: 13px; margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
-.badge { flex: none; background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 600; white-space: nowrap; }
-.badge.gone { background: transparent; color: var(--soft); border: 1px solid var(--line); font-weight: 400; }
-.badge.today { background: var(--danger); }
-.empty { color: var(--soft); text-align: center; padding: 40px 12px; }
-.field { display: grid; gap: 4px; margin: 10px 0; }
-.field > span { color: var(--soft); font-size: 13px; }
-.row { display: flex; gap: 10px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
-.hint { color: var(--soft); font-size: 13px; margin: 4px 0 0; }
-.warn { color: var(--danger); margin: 8px 0; }
-.big { text-align: center; margin: 12px 0 4px; font-size: 22px; font-weight: 700; }
-.big small { display: block; font-size: 13px; font-weight: 400; color: var(--soft); margin-top: 2px; }
-label.switch { display: flex; gap: 10px; align-items: center; min-height: 44px; }
+ft-countdown { display: flex; flex-direction: column; height: 100%; font: 15px system-ui, sans-serif; --line: var(--ion-border-color, #d8d8d8); --soft: var(--ion-color-medium, #666); --accent: var(--ion-color-primary, #0a7); --danger: var(--ion-color-danger, #e0562b); --on-accent: var(--ion-color-primary-contrast, #fff); }
+ft-countdown ion-content { flex: 1; }
+ft-countdown .view * { box-sizing: border-box; }
+ft-countdown .ft-i { display: block; width: 22px; height: 22px; background: currentColor; -webkit-mask: var(--i) center/contain no-repeat; mask: var(--i) center/contain no-repeat; }
+ft-countdown .ft-i.small { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; margin: 0; }
+ft-countdown input, ft-countdown select { font: inherit; color: inherit; background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; min-height: 44px; }
+ft-countdown input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; margin: 0; }
+ft-countdown ul { list-style: none; margin: 0; padding: 0; }
+ft-countdown li { border-bottom: 1px solid var(--line); }
+ft-countdown li button { appearance: none; background: transparent; color: inherit; font: inherit; cursor: pointer; display: flex; width: 100%; align-items: center; gap: 10px; text-align: start; border: 0; border-radius: 0; height: auto; padding: 10px 4px; }
+ft-countdown li .what { flex: 1; min-width: 0; }
+ft-countdown .title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+ft-countdown .meta { color: var(--soft); font-size: 13px; margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
+ft-countdown .badge { flex: none; background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+ft-countdown .badge.gone { background: transparent; color: var(--soft); border: 1px solid var(--line); font-weight: 400; }
+ft-countdown .badge.today { background: var(--danger); }
+ft-countdown .empty { color: var(--soft); text-align: center; padding: 40px 12px; }
+ft-countdown .field { display: grid; gap: 4px; margin: 10px 0; }
+ft-countdown .field > span { color: var(--soft); font-size: 13px; }
+ft-countdown .row { display: flex; gap: 10px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+ft-countdown .hint { color: var(--soft); font-size: 13px; margin: 4px 0 0; }
+ft-countdown .warn { color: var(--danger); margin: 8px 0; }
+ft-countdown .big { text-align: center; margin: 12px 0 4px; font-size: 22px; font-weight: 700; }
+ft-countdown .big small { display: block; font-size: 13px; font-weight: 400; color: var(--soft); margin-top: 2px; }
+ft-countdown label.switch { display: flex; gap: 10px; align-items: center; min-height: 44px; }
 `;
 
-const icon = (name) => `<i class="i" style="--i:url(./icon/${name}.svg)"></i>`;
-const smallIcon = (name) => `<i class="i small" style="--i:url(./icon/${name}.svg)"></i>`;
+/** An Ionicon in a button: Ionic's own `ion-icon` when the app lent it by name, else the one the
+ *  app serves at `./icon/<name>.svg`, painted in the button's colour. Never a picture of ours. */
+const lent = (name) => Boolean(globalThis.Ionicons?.map?.has(name));
+const icon = (name) =>
+  lent(name)
+    ? `<ion-icon slot="icon-only" name="${name}" aria-hidden="true"></ion-icon>`
+    : `<i slot="icon-only" class="ft-i" style="--i:url(./icon/${name}.svg)" aria-hidden="true"></i>`;
+const smallIcon = (name, slot = "") =>
+  lent(name)
+    ? `<ion-icon ${slot ? `slot="${slot}"` : ""} name="${name}" aria-hidden="true"></ion-icon>`
+    : `<i ${slot ? `slot="${slot}"` : ""} class="ft-i small" style="--i:url(./icon/${name}.svg)" aria-hidden="true"></i>`;
 
 /** The plugin's view: a list of dates, one date, or the settings. */
 class Countdown extends HTMLElement {
   constructor() {
     super();
-    this.root = this.attachShadow({ mode: "open" });
     this.lang = "en";
     this.events = [];
     this.screen = "list";
@@ -282,11 +285,14 @@ class Countdown extends HTMLElement {
   }
 
   connectedCallback() {
-    this.root.innerHTML = `<style>${STYLE}</style><div class="view"></div>`;
-    this.view = this.root.querySelector(".view");
-    this.root.addEventListener("click", (event) => this.onClick(event));
-    this.root.addEventListener("input", (event) => this.onInput(event));
-    this.root.addEventListener("change", (event) => this.onChange(event));
+    // In the page, not in a shadow root: the frame holds only this tool, and Ionic's global
+    // styles (colours, typography) do not cross a shadow boundary.
+    this.innerHTML = `<style>${STYLE}</style><ion-header><ion-toolbar></ion-toolbar></ion-header><ion-content class="ion-padding"><div class="view"></div></ion-content>`;
+    this.toolbar = this.querySelector("ion-toolbar");
+    this.view = this.querySelector(".view");
+    this.addEventListener("click", (event) => this.onClick(event));
+    this.addEventListener("input", (event) => this.onInput(event));
+    this.addEventListener("change", (event) => this.onChange(event));
     globalThis.ft?.onOpen?.((opening) => this.onOpen(opening));
     this.paint();
   }
@@ -373,8 +379,8 @@ class Countdown extends HTMLElement {
   }
 
   async onClick(event) {
-    const button = event.target.closest("button");
-    if (!button) return;
+    const button = event.target.closest("button, ion-button");
+    if (!button || button.disabled) return;
     const { act, id } = button.dataset;
     if (act === "open") {
       const found = this.events.find((one) => one.id === id);
@@ -384,7 +390,6 @@ class Countdown extends HTMLElement {
       this.screen = "settings";
       this.paint();
     } else if (act === "back") this.list();
-    else if (act === "close") globalThis.ft.close();
     else if (act === "save") await this.save();
     else if (act === "delete") await this.remove();
     else if (act === "share") this.share();
@@ -403,7 +408,7 @@ class Countdown extends HTMLElement {
   refreshValid() {
     const valid = Boolean(this.current?.title.trim()) && Boolean(parseDate(this.current?.date));
     for (const act of ["save", "share"]) {
-      const button = this.view.querySelector(`[data-act="${act}"]`);
+      const button = this.querySelector(`[data-act="${act}"]`);
       if (button) button.disabled = !valid;
     }
   }
@@ -458,13 +463,38 @@ class Countdown extends HTMLElement {
     const event = this.current;
     if (!event) return;
     const known = this.events.some((one) => one.id === event.id);
-    if (known && !confirm(t(this.lang, "confirmDelete"))) return;
+    if (known && !(await this.sure())) return;
     if (known) {
       await globalThis.ft.remind.cancel(event.id);
       await globalThis.ft.records.forget(eventKey(event.id));
       this.events = this.events.filter((one) => one.id !== event.id);
     }
     this.list();
+  }
+
+  /** Asks once before something that is for good. confirm() does nothing in the frame (it has no
+   *  allow-modals), so the question is Ionic's alert, which the app lends. */
+  async sure() {
+    const alert = document.createElement("ion-alert");
+    alert.message = t(this.lang, "confirmDelete");
+    alert.buttons = [
+      { text: t(this.lang, "cancel"), role: "cancel" },
+      { text: t(this.lang, "delete"), role: "destructive" },
+    ];
+    document.body.append(alert);
+    await alert.present?.();
+    const { role } = (await alert.onDidDismiss?.()) ?? {};
+    alert.remove();
+    return role === "destructive";
+  }
+
+  /** The bar of a screen, drawn only when the screen (or the language) changes: Ionic draws a
+   *  button once, and drawing it again on every change would make it flash. */
+  bar(screen, start, end) {
+    const key = `${screen}|${this.lang}`;
+    if (this.barOf === key) return;
+    this.barOf = key;
+    this.toolbar.innerHTML = `<ion-buttons slot="start">${start}</ion-buttons><ion-buttons slot="end">${end}</ion-buttons>`;
   }
 
   /** The day and its countdown in the composer; the user is the one who sends it. */
@@ -500,13 +530,14 @@ class Countdown extends HTMLElement {
         </button></li>`;
       })
       .join("");
+    // No ✕ of its own: the app's tool window has one (2026-10-09).
+    this.bar(
+      "list",
+      "",
+      `<ion-button data-act="settings" aria-label="${escape(T("settings"))}">${icon("options-outline")}</ion-button>
+       <ion-button data-act="new" color="primary" aria-label="${escape(T("newEvent"))}">${icon("add-outline")}</ion-button>`,
+    );
     this.view.innerHTML = `
-      <div class="bar">
-        <button data-act="close" aria-label="${escape(T("close"))}">${icon("close-outline")}</button>
-        <span class="grow"></span>
-        <button data-act="settings" aria-label="${escape(T("settings"))}">${icon("options-outline")}</button>
-        <button data-act="new" class="on" aria-label="${escape(T("newEvent"))}">${icon("add-outline")}</button>
-      </div>
       ${this.notice ? `<p class="hint">${escape(this.notice)}</p>` : ""}
       ${this.warning ? `<p class="warn">${escape(this.warning)}</p>` : ""}
       ${rows ? `<ul>${rows}</ul>` : `<p class="empty">${escape(T("empty"))}</p>`}`;
@@ -524,13 +555,14 @@ class Countdown extends HTMLElement {
     const options = [["", "remindNone"], ["0", "remindSame"], ["1", "remindDay"], ["7", "remindWeek"]]
       .map(([value, key]) => `<option value="${value}" ${String(event.remind ?? "") === value ? "selected" : ""}>${escape(T(key))}</option>`)
       .join("");
+    this.bar(
+      "event",
+      `<ion-button data-act="back" aria-label="${escape(T("back"))}">${icon("arrow-back-outline")}</ion-button>`,
+      `<ion-button data-act="delete" color="danger" aria-label="${escape(T("delete"))}">${icon("trash-outline")}</ion-button>
+       <ion-button data-act="save" color="primary" aria-label="${escape(T("save"))}">${icon("checkmark-outline")}</ion-button>`,
+    );
+    this.querySelector('ion-toolbar [data-act="save"]').disabled = !valid;
     this.view.innerHTML = `
-      <div class="bar">
-        <button data-act="back" aria-label="${escape(T("back"))}">${icon("arrow-back-outline")}</button>
-        <span class="grow"></span>
-        <button data-act="delete" class="danger" aria-label="${escape(T("delete"))}">${icon("trash-outline")}</button>
-        <button data-act="save" class="on" aria-label="${escape(T("save"))}" ${valid ? "" : "disabled"}>${icon("checkmark-outline")}</button>
-      </div>
       ${big}
       <label class="field"><span>${escape(T("name"))}</span>
         <input name="title" maxlength="200" placeholder="${escape(T("placeholder"))}" value="${escape(event.title)}"></label>
@@ -539,18 +571,15 @@ class Countdown extends HTMLElement {
       <label class="switch"><input type="checkbox" name="yearly" ${event.yearly ? "checked" : ""}><span>${escape(T("yearly"))}</span></label>
       <label class="field"><span>${escape(T("remind"))}</span><select name="remind">${options}</select></label>
       ${this.warning ? `<p class="warn">${escape(this.warning)}</p>` : ""}
-      ${this.inChat ? `<div class="row"><button data-act="share" class="text" ${valid ? "" : "disabled"}>${smallIcon("chatbubble-outline")}<span>${escape(T("share"))}</span></button></div>` : ""}`;
+      ${this.inChat ? `<div class="row"><ion-button data-act="share" fill="outline" ${valid ? "" : "disabled"}>${smallIcon("chatbubble-outline", "start")}${escape(T("share"))}</ion-button></div>` : ""}`;
     const title = this.view.querySelector('input[name="title"]');
     if (title && !event.title) title.focus?.();
   }
 
   paintSettings() {
     const T = (key) => t(this.lang, key);
+    this.bar("settings", `<ion-button data-act="back" aria-label="${escape(T("back"))}">${icon("arrow-back-outline")}</ion-button>`, "");
     this.view.innerHTML = `
-      <div class="bar">
-        <button data-act="back" aria-label="${escape(T("back"))}">${icon("arrow-back-outline")}</button>
-        <span class="grow"></span>
-      </div>
       <label class="switch">
         <input type="checkbox" name="showTitle" ${this.showTitle ? "checked" : ""}>
         <span>${escape(T("lockScreen"))}</span>
