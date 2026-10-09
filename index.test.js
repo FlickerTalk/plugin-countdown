@@ -1,6 +1,6 @@
 // The plugin's own tests: the model of a date, the days left, the order of the list, the moment
 // a reminder rings, the calendar file, and the flow against a fake core.
-import { readFileSync, existsSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -192,6 +192,8 @@ describe("the catalogue", () => {
     for (const lang of LANGUAGES) {
       expect(Object.keys(catalogueOf(lang)).sort(), lang).toEqual(keys);
       for (const key of ["inDays", "daysAgo", "years", "imported"]) expect(catalogueOf(lang)[key], `${lang}.${key}`).toContain("{n}");
+      // The no of the question before deleting (2026-10-09).
+      expect(catalogueOf(lang).cancel?.trim(), `${lang}.cancel`).toBeTruthy();
     }
   });
 
@@ -277,7 +279,16 @@ const stored = (id, title, date, extra = {}) => JSON.stringify({ id, title, date
 describe("the plugin", () => {
   let core;
   let element;
-  const inside = () => element.shadowRoot;
+  // The tool draws in the page: Ionic's styles do not cross a shadow root.
+  const inside = () => element;
+  // Ionic moves a button's first aria attributes to the native button inside it once it has drawn.
+  const aria = (button, name) => button.getAttribute(name) ?? button.shadowRoot?.querySelector("button")?.getAttribute(name);
+  /** Answers the alert the tool asked with: `destructive` deletes, `cancel` keeps. */
+  const answer = async (role) => {
+    for (let wait = 0; wait < 50 && !document.querySelector("ion-alert"); wait += 1) await tick();
+    await document.querySelector("ion-alert").dismiss(null, role);
+    for (let wait = 0; wait < 5; wait += 1) await tick();
+  };
   const press = async (act) => {
     inside().querySelector(`[data-act="${act}"]`).click();
     await tick();
@@ -294,7 +305,6 @@ describe("the plugin", () => {
     vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
     core = fakeCore();
     globalThis.ft = core.ft;
-    globalThis.confirm = () => true;
     document.body.innerHTML = "";
     element = document.createElement("ft-countdown");
     document.body.append(element);
@@ -314,7 +324,7 @@ describe("the plugin", () => {
     const badges = [...inside().querySelectorAll(".badge")].map((one) => one.textContent.trim());
     expect(badges).toEqual(["Faltan 14 días", "Faltan 188 días", "Hace 6 días"]);
     expect(inside().textContent).toContain("30 años");
-    expect(inside().querySelector('[data-act="new"]').getAttribute("aria-label")).toBe("Nueva fecha");
+    expect(aria(inside().querySelector('[data-act="new"]'), "aria-label")).toBe("Nueva fecha");
   });
 
   it("writes a new date, sets its reminder through the core and cancels it on deletion", async () => {
@@ -335,6 +345,7 @@ describe("the plugin", () => {
 
     await press("open");
     await press("delete");
+    await answer("destructive");
     expect(core.ft.remind.cancel).toHaveBeenCalledWith(id);
     expect(core.records.size).toBe(0);
     expect(inside().textContent).toContain("No dates yet");
@@ -414,7 +425,9 @@ describe("the plugin", () => {
     expect(inside().textContent).toContain("not allowed to set reminders");
   });
 
-  it("does not keep a date without a title and closes when asked", async () => {
+  // The app's tool window has its own ✕ (and Android's Back): a second one in the tool was a
+  // duplicate (2026-10-09).
+  it("does not keep a date without a title, and leaves closing to the app's window", async () => {
     await core.open({});
     await press("new");
     type("date", "2027-02-02");
@@ -422,8 +435,103 @@ describe("the plugin", () => {
     expect(core.records.size).toBe(0);
     expect(inside().querySelector('input[name="title"]')).toBeTruthy();
     await press("back");
-    await press("close");
-    expect(core.ft.close).toHaveBeenCalled();
+    expect(inside().querySelector('[data-act="close"]')).toBeNull();
+  });
+
+  // confirm() does nothing in the plugin's frame (no allow-modals): the question is Ionic's alert.
+  it("asks with an Ionic alert before deleting, and keeps the date when the answer is no", async () => {
+    core.records.set("event/a", stored("a", "Trip", "2027-04-12"));
+    await core.open({});
+    await press("open");
+    await press("delete");
+    const alert = document.querySelector("ion-alert");
+    expect(alert.message).toBe("Delete this date? It is gone for good.");
+    expect(alert.buttons.map((one) => one.role)).toEqual(["cancel", "destructive"]);
+    expect(alert.buttons.map((one) => one.text)).toEqual(["Cancel", "Delete"]);
+    await answer("cancel");
+    expect(core.records.size).toBe(1);
+    expect(core.ft.remind.cancel).not.toHaveBeenCalled();
+    expect(inside().querySelector('input[name="title"]').value).toBe("Trip");
+  });
+
+  it("puts each screen's bar in ion-header and the rest in ion-content, its actions Ionic buttons with a label", async () => {
+    core.records.set("event/a", stored("a", "Trip", "2027-04-12"));
+    await core.open({});
+    expect(element.shadowRoot).toBe(null);
+    const acts = () => [...element.querySelectorAll(":scope > ion-header > ion-toolbar ion-button")].map((one) => one.dataset.act);
+    expect(acts()).toEqual(["settings", "new"]);
+    expect(element.querySelector(":scope > ion-content .title").textContent).toBe("Trip");
+    await press("open");
+    expect(acts()).toEqual(["back", "delete", "save"]);
+    expect(element.querySelector(":scope > ion-content input[name='title']")).toBeTruthy();
+    for (const one of element.querySelectorAll("ion-toolbar ion-button")) expect(aria(one, "aria-label"), one.dataset.act).toBeTruthy();
+    await press("back");
+    await press("settings");
+    expect(acts()).toEqual(["back"]);
+    expect(element.querySelector(":scope > ion-content input[name='showTitle']")).toBeTruthy();
+  });
+
+  // Ionic draws a button once; drawing the bar again on every change would flash it.
+  it("keeps the bar of a date while the date changes, and its save button follows the title", async () => {
+    await core.open({});
+    await press("new");
+    const bar = element.querySelector("ion-toolbar ion-buttons");
+    const save = element.querySelector('ion-toolbar [data-act="save"]');
+    expect(save.disabled).toBe(true);
+    type("title", "Dentist");
+    expect(save.disabled).toBe(false);
+    const yearly = element.querySelector('input[name="yearly"]');
+    yearly.checked = true;
+    yearly.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(element.querySelector("ion-toolbar ion-buttons")).toBe(bar);
+    expect(element.querySelector('ion-toolbar [data-act="save"]')).toBe(save);
+  });
+
+  it("shares with an Ionic button in a conversation", async () => {
+    core.records.set("event/a", stored("a", "Trip", "2027-04-12"));
+    await core.open({ chat: "c".repeat(43) });
+    await press("open");
+    expect(element.querySelector('ion-content ion-button[data-act="share"]')).toBeTruthy();
+  });
+
+  // The icons are the app's: Ionic's own when the app lent them by name, else the ones it serves.
+  it("draws an Ionicon the app lent by name with ion-icon, and the one it serves otherwise", async () => {
+    await core.open({});
+    expect(element.querySelector('[data-act="new"] ion-icon')).toBe(null);
+    expect(element.querySelector('[data-act="new"] [slot="icon-only"]').getAttribute("style")).toContain("./icon/add-outline.svg");
+
+    globalThis.Ionicons = { map: new Map([["add-outline", "data:image/svg+xml;utf8,<svg></svg>"]]) };
+    document.body.innerHTML = "";
+    element = document.createElement("ft-countdown");
+    document.body.append(element);
+    await core.open({});
+    expect(element.querySelector('[data-act="new"] ion-icon[slot="icon-only"]').getAttribute("name")).toBe("add-outline");
+    delete globalThis.Ionicons;
+  });
+});
+
+describe("the package", () => {
+  const dist = join(import.meta.dirname, "dist");
+  const files = readdirSync(dist);
+
+  // Only an app that lends Ionic can show it (app 1.6.0): an older one keeps the version it has.
+  it("asks for an app that lends Ionic", () => {
+    expect(JSON.parse(readFileSync(join(import.meta.dirname, "module.json"), "utf8")).minCoreVersion).toBe("1.6.0");
+  });
+
+  // Ionic is the app's, lent to the frame: a copy in the package would be a second one, and heavy.
+  it("carries no Ionic of its own", () => {
+    for (const file of files) {
+      const code = readFileSync(join(dist, file), "utf8");
+      expect(code, file).not.toMatch(/@ionic\/core|ionicframework|stencil|defineCustomElement|__registerHost/i);
+      expect(code, file).not.toMatch(/^\s*import\s.*from\s+["'](?!\.\/)/m);
+    }
+  });
+
+  // The app carries it as a seed on iOS: 128 KiB at most (plugin-sdk).
+  it("is small enough to be a seed", () => {
+    const bytes = files.reduce((sum, file) => sum + statSync(join(dist, file)).size, 0);
+    expect(bytes).toBeLessThanOrEqual(128 * 1024);
   });
 });
 
