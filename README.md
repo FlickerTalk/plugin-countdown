@@ -37,6 +37,10 @@ Desde la 1.0.2 la ventana va en los envoltorios de Ionic que la app presta al ma
 FlickerTalk; pide la app 1.6.0 (`minCoreVersion`) y el paquete no lleva Ionic. `@ionic/core` es
 solo `devDependency`, para que los tests pinten lo mismo que el teléfono.
 
+Desde la 1.0.3 el nombre y el día van en `ion-input` dentro de `ion-item`, que caben en el ancho
+de la ventana (en el iPhone el campo del día se salía por la derecha), y el aviso de borrar lleva el
+nombre de la fecha como título, como los de la app, sin el anillo azul de foco alrededor.
+
 ## Desarrollo
 
 ```sh

@@ -236,8 +236,9 @@ ft-countdown ion-content { flex: 1; }
 ft-countdown .view * { box-sizing: border-box; }
 ft-countdown .ft-i { display: block; width: 22px; height: 22px; background: currentColor; -webkit-mask: var(--i) center/contain no-repeat; mask: var(--i) center/contain no-repeat; }
 ft-countdown .ft-i.small { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; margin: 0; }
-ft-countdown input, ft-countdown select { font: inherit; color: inherit; background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; min-height: 44px; }
-ft-countdown input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; margin: 0; }
+ft-countdown select { font: inherit; color: inherit; background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; min-height: 44px; }
+ft-countdown input[type="checkbox"] { width: 22px; height: 22px; margin: 0; }
+ft-countdown ion-list { margin: 10px 0; }
 ft-countdown ul { list-style: none; margin: 0; padding: 0; }
 ft-countdown li { border-bottom: 1px solid var(--line); }
 ft-countdown li button { appearance: none; background: transparent; color: inherit; font: inherit; cursor: pointer; display: flex; width: 100%; align-items: center; gap: 10px; text-align: start; border: 0; border-radius: 0; height: auto; padding: 10px 4px; }
@@ -256,6 +257,9 @@ ft-countdown .warn { color: var(--danger); margin: 8px 0; }
 ft-countdown .big { text-align: center; margin: 12px 0 4px; font-size: 22px; font-weight: 700; }
 ft-countdown .big small { display: block; font-size: 13px; font-weight: 400; color: var(--soft); margin-top: 2px; }
 ft-countdown label.switch { display: flex; gap: 10px; align-items: center; min-height: 44px; }
+/* Ionic focuses an alert's dialog once it is shown, and the dialog has no outline rule of its own:
+   WebKit drew its blue focus ring around it in the frame. The app's alerts show none. */
+ion-alert .alert-wrapper:focus { outline: none; }
 `;
 
 /** An Ionicon in a button: Ionic's own `ion-icon` when the app lent it by name, else the one the
@@ -398,8 +402,8 @@ class Countdown extends HTMLElement {
   onInput(event) {
     const field = event.target;
     if (!this.current) return;
-    if (field.name === "title") this.current.title = field.value;
-    else if (field.name === "date") this.current.date = field.value;
+    if (field.name === "title") this.current.title = field.value ?? "";
+    else if (field.name === "date") this.current.date = field.value ?? "";
     else return;
     this.refreshValid();
   }
@@ -417,12 +421,12 @@ class Countdown extends HTMLElement {
     const field = event.target;
     if (field.name === "yearly" && this.current) {
       this.current.yearly = field.checked;
-      this.paintEvent();
+      this.refreshEvent();
     } else if (field.name === "remind" && this.current) {
       this.current.remind = field.value === "" ? null : Number(field.value);
     } else if (field.name === "date" && this.current) {
       this.current.date = field.value;
-      this.paintEvent();
+      this.refreshEvent();
     } else if (field.name === "showTitle") {
       this.showTitle = field.checked;
       await globalThis.ft.store.set("showTitle", this.showTitle ? "1" : "0");
@@ -438,7 +442,7 @@ class Countdown extends HTMLElement {
     const event = this.current;
     if (!event) return;
     event.title = event.title.trim();
-    if (!event.title || !parseDate(event.date)) return this.paintEvent();
+    if (!event.title || !parseDate(event.date)) return this.refreshEvent();
     const at = reminderAt(event);
     const had = this.events.find((one) => one.id === event.id);
     if (at === null) {
@@ -447,11 +451,11 @@ class Countdown extends HTMLElement {
     } else {
       if (!(await globalThis.ft.remind.set(event.id, at, reminderText(event, this.showTitle)))) {
         this.warning = t(this.lang, "noRemind");
-        return this.paintEvent();
+        return this.refreshEvent();
       }
       event.remindAt = at;
     }
-    if (!(await this.keep(event))) return this.paintEvent();
+    if (!(await this.keep(event))) return this.refreshEvent();
     const known = this.events.findIndex((one) => one.id === event.id);
     if (known < 0) this.events.push(event);
     else this.events[known] = event;
@@ -463,7 +467,7 @@ class Countdown extends HTMLElement {
     const event = this.current;
     if (!event) return;
     const known = this.events.some((one) => one.id === event.id);
-    if (known && !(await this.sure())) return;
+    if (known && !(await this.sure(this.events.find((one) => one.id === event.id).title))) return;
     if (known) {
       await globalThis.ft.remind.cancel(event.id);
       await globalThis.ft.records.forget(eventKey(event.id));
@@ -473,9 +477,11 @@ class Countdown extends HTMLElement {
   }
 
   /** Asks once before something that is for good. confirm() does nothing in the frame (it has no
-   *  allow-modals), so the question is Ionic's alert, which the app lends. */
-  async sure() {
+   *  allow-modals), so the question is Ionic's alert, which the app lends; like the app's own
+   *  alerts, its header names what goes. */
+  async sure(title) {
     const alert = document.createElement("ion-alert");
+    alert.header = title;
     alert.message = t(this.lang, "confirmDelete");
     alert.buttons = [
       { text: t(this.lang, "cancel"), role: "cancel" },
@@ -543,15 +549,12 @@ class Countdown extends HTMLElement {
       ${rows ? `<ul>${rows}</ul>` : `<p class="empty">${escape(T("empty"))}</p>`}`;
   }
 
+  /** The date's screen. Its fields are Ionic's, drawn once: what follows the date as it changes is
+   *  refreshed in place (`refreshEvent`), or Ionic would draw them again and they would flash. */
   paintEvent() {
     const T = (key, vars) => t(this.lang, key, vars);
     const event = this.current;
-    const now = Date.now();
     const valid = Boolean(event.title.trim()) && Boolean(parseDate(event.date));
-    const years = yearsOn(event, now);
-    const big = parseDate(event.date)
-      ? `<p class="big">${escape(countdownLabel(event, now, this.lang))}${years !== null ? `<small>${escape(T("years", { n: years }))}</small>` : ""}</p>`
-      : "";
     const options = [["", "remindNone"], ["0", "remindSame"], ["1", "remindDay"], ["7", "remindWeek"]]
       .map(([value, key]) => `<option value="${value}" ${String(event.remind ?? "") === value ? "selected" : ""}>${escape(T(key))}</option>`)
       .join("");
@@ -562,18 +565,42 @@ class Countdown extends HTMLElement {
        <ion-button data-act="save" color="primary" aria-label="${escape(T("save"))}">${icon("checkmark-outline")}</ion-button>`,
     );
     this.querySelector('ion-toolbar [data-act="save"]').disabled = !valid;
+    // The name and the day in Ionic's inputs, which take the width of their item: a plain date
+    // field stuck out past the right edge of the window on the iPhone (issue #3).
     this.view.innerHTML = `
-      ${big}
-      <label class="field"><span>${escape(T("name"))}</span>
-        <input name="title" maxlength="200" placeholder="${escape(T("placeholder"))}" value="${escape(event.title)}"></label>
-      <label class="field"><span>${escape(T("date"))}</span>
-        <input type="date" name="date" value="${escape(event.date)}"></label>
+      <p class="big" hidden></p>
+      <ion-list>
+        <ion-item><ion-input name="title" label="${escape(T("name"))}" label-placement="stacked" maxlength="200" placeholder="${escape(T("placeholder"))}" value="${escape(event.title)}"></ion-input></ion-item>
+        <ion-item><ion-input type="date" name="date" label="${escape(T("date"))}" label-placement="stacked" value="${escape(event.date)}"></ion-input></ion-item>
+      </ion-list>
       <label class="switch"><input type="checkbox" name="yearly" ${event.yearly ? "checked" : ""}><span>${escape(T("yearly"))}</span></label>
       <label class="field"><span>${escape(T("remind"))}</span><select name="remind">${options}</select></label>
-      ${this.warning ? `<p class="warn">${escape(this.warning)}</p>` : ""}
+      <p class="warn" hidden></p>
       ${this.inChat ? `<div class="row"><ion-button data-act="share" fill="outline" ${valid ? "" : "disabled"}>${smallIcon("chatbubble-outline", "start")}${escape(T("share"))}</ion-button></div>` : ""}`;
-    const title = this.view.querySelector('input[name="title"]');
-    if (title && !event.title) title.focus?.();
+    this.refreshEvent();
+    const title = this.view.querySelector('ion-input[name="title"]');
+    if (title && !event.title) title.setFocus?.();
+  }
+
+  /** What follows the date on its screen: the countdown, the warning and the buttons. */
+  refreshEvent() {
+    const T = (key, vars) => t(this.lang, key, vars);
+    const event = this.current;
+    const now = Date.now();
+    const years = yearsOn(event, now);
+    const big = this.view.querySelector(".big");
+    if (big) {
+      big.innerHTML = parseDate(event.date)
+        ? `${escape(countdownLabel(event, now, this.lang))}${years !== null ? `<small>${escape(T("years", { n: years }))}</small>` : ""}`
+        : "";
+      big.hidden = !big.innerHTML;
+    }
+    const warn = this.view.querySelector(".warn");
+    if (warn) {
+      warn.textContent = this.warning;
+      warn.hidden = !this.warning;
+    }
+    this.refreshValid();
   }
 
   paintSettings() {
