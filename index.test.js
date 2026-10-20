@@ -381,7 +381,7 @@ describe("the plugin", () => {
   it("opens the date a tapped reminder belongs to", async () => {
     core.records.set("event/a", stored("a", "Ring mum", "2026-10-06", { yearly: true, remind: 0 }));
     await core.open({ reminder: "a" });
-    expect(inside().querySelector('input[name="title"]').value).toBe("Ring mum");
+    expect(inside().querySelector('[name="title"]').value).toBe("Ring mum");
     expect(inside().querySelector(".big").textContent).toContain("Today");
   });
 
@@ -452,6 +452,69 @@ describe("the plugin", () => {
     expect(core.records.size).toBe(1);
     expect(core.ft.remind.cancel).not.toHaveBeenCalled();
     expect(inside().querySelector('input[name="title"]').value).toBe("Trip");
+  });
+
+  // Issue #3: on the iPhone the plain date field stuck out past the right edge of the window.
+  it("writes the name and the day in Ionic inputs inside items, which the tool's own styles leave alone", async () => {
+    await core.open({});
+    await press("new");
+    const name = element.querySelector(':scope > ion-content ion-list ion-item ion-input[name="title"]');
+    const day = element.querySelector(':scope > ion-content ion-list ion-item ion-input[name="date"]');
+    expect(name).toBeTruthy();
+    expect(day).toBeTruthy();
+    expect(day.type).toBe("date");
+    expect(day.value).toBe("2026-10-06");
+    expect(day.label).toBe("Day");
+    await tick();
+    const native = day.querySelector("input");
+    expect(native.type).toBe("date");
+    // Ionic sizes its own input to the item; a rule of the tool's (a border, a padding, a width)
+    // on it would push it out again. Only the universal box-sizing may reach it.
+    const own = [...element.querySelector("style").sheet.cssRules]
+      .filter((rule) => rule.selectorText && native.matches(rule.selectorText))
+      .filter((rule) => Array.from({ length: rule.style.length }, (_, i) => rule.style.item(i)).some((property) => property !== "box-sizing"))
+      .map((rule) => rule.selectorText);
+    expect(own).toEqual([]);
+  });
+
+  // Ionic draws a field once; drawing the form again on every change would make it flash.
+  it("keeps its fields while the day or the year changes, and only the countdown follows", async () => {
+    await core.open({});
+    await press("new");
+    const fields = [...element.querySelectorAll("ion-content ion-input")];
+    type("title", "Trip");
+    type("date", "2026-10-20");
+    expect(inside().querySelector(".big").textContent).toContain("In 14 days");
+    const yearly = inside().querySelector('input[name="yearly"]');
+    yearly.checked = true;
+    yearly.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(inside().querySelector(".big").textContent).toContain("In 14 days");
+    expect([...element.querySelectorAll("ion-content ion-input")]).toEqual(fields);
+    type("date", "");
+    expect(inside().querySelector(".big").hidden).toBe(true);
+    expect(element.querySelector('ion-toolbar [data-act="save"]').disabled).toBe(true);
+    expect([...element.querySelectorAll("ion-content ion-input")]).toEqual(fields);
+  });
+
+  // Issue #3: the alert should look like the app's own, without WebKit's blue ring around it.
+  it("names the date in the alert's header, and draws no focus ring around the dialog Ionic focuses", async () => {
+    core.records.set("event/a", stored("a", "Trip", "2027-04-12"));
+    await core.open({});
+    await press("open");
+    await press("delete");
+    const alert = document.querySelector("ion-alert");
+    expect(alert.header).toBe("Trip");
+    // Once shown, Ionic focuses the dialog itself, which has no outline rule of its own.
+    const wrapper = alert.querySelector(".alert-wrapper");
+    for (let wait = 0; wait < 50 && document.activeElement !== wrapper; wait += 1) await tick();
+    expect(document.activeElement).toBe(wrapper);
+    const outlines = [...document.styleSheets]
+      .flatMap((sheet) => [...sheet.cssRules])
+      .filter((rule) => rule.selectorText && wrapper.matches(rule.selectorText))
+      .map((rule) => rule.style.outlineStyle || rule.style.outline);
+    expect(outlines).toContain("none");
+    await answer("cancel");
+    expect(core.records.size).toBe(1);
   });
 
   it("puts each screen's bar in ion-header and the rest in ion-content, its actions Ionic buttons with a label", async () => {
