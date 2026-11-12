@@ -1,0 +1,15 @@
+import { initialize } from "@ionic/core/components";
+import { defineCustomElement as alert } from "@ionic/core/components/ion-alert.js";
+import { defineCustomElement as button } from "@ionic/core/components/ion-button.js";
+import { defineCustomElement as buttons } from "@ionic/core/components/ion-buttons.js";
+import { defineCustomElement as content } from "@ionic/core/components/ion-content.js";
+import { defineCustomElement as icon } from "@ionic/core/components/ion-icon.js";
+import { defineCustomElement as header } from "@ionic/core/components/ion-header.js";
+import { defineCustomElement as input } from "@ionic/core/components/ion-input.js";
+import { defineCustomElement as item } from "@ionic/core/components/ion-item.js";
+import { defineCustomElement as list } from "@ionic/core/components/ion-list.js";
+import { defineCustomElement as title } from "@ionic/core/components/ion-title.js";
+import { defineCustomElement as toolbar } from "@ionic/core/components/ion-toolbar.js";
+
+initialize();
+for (const define of [alert, button, buttons, content, header, icon, input, item, list, title, toolbar]) define();
